@@ -8,11 +8,11 @@ The video processing pipeline ``process_vid()``, consists of the following steps
   5. Assume each labeled window is a possible vehicle, and calculate it's dimensions (centers, width, height), and add to `local_detections` as an object of the class `Vehicle()`.
   6. Loop over the previously detected windows, and the currently detected and if both have close centers, assume that this detection resembles a new car: append this `Vehicle()` to the global array `cars`.
   7. Loop over the detected `cars`, for every `car`, loop over the `local_detections`:
-    1. If the centers and dimensions of the car and detection are close enough, do not save this detection for the next frame and assume its a car; `car.detected = True`.
-    2. Count how many times has this car been detected `car.n_detected += 1` and `car.not_detected -= 1`.
-    3. If the car wasn't similar to any of the detected windows, increment `car.not_detected += 1`.
+      1. If the centers and dimensions of the car and detection are close enough, do not save this detection for the next frame and assume its a car; `car.detected = True`.
+      2. Count how many times has this car been detected `car.n_detected += 1` and `car.not_detected -= 1`.
+      3. If the car wasn't similar to any of the detected windows, increment `car.not_detected += 1`.
   8. Using the number of frames the car has been detected or not, we can approach a decision:
-    * Either: Draw the window detected since it most probably resembles a car
+    * Either: Draw the window detected since it most probably resembles a car.
     * Or: Remove the detected window since it was presumably a false positive.
   9. The average of widths and heights are used to smooth the window drawn to make sure there aren't any abrupt changes in window's dimensions.
       
