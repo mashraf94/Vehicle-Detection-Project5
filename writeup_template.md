@@ -16,13 +16,19 @@
 ## 1. DataSet Feature Extraction: `extract_features()`
 The dataset provided is composed of 17,760 images, 8,792 car images and 8,968 noncar images. Each image's dimensions is 64x64, which resembles a window in an image. For every image we generate a feature vector containing the following features concatenated.
 
+### The `extract_features()` function uses the following functions to acquire each image's features and concatenates them in a single feature vector:
+
 ### 1. Histogram of Oriented Gradients (HOG) Features: `hog_feature()`
 We first perform the Histogram of Oriented Gradients on the 64x64 image, using the `skimage.feature` module we import `hog()` function which performs HOG on a single image channel. We provide the `hog()` function with several parameters:
 * The number of orientation bins within which we distribute the gradients: `hog_bins = 9`.
 * The number of pixels in each HOG cell, in which we accumulate the computed gradients: `px_pcell=8`.
 * The number of HOG cells in each HOG block: `cell_pblock=2`.
+* The Channel to perform HOG calculation within or `'ALL'` for all 3 channels combined: `hog_channel='ALL'`
 
-*The histogram of oriented gradients technique proves that its extremely efficient in detecting the external outline of a car, as follows:*
+***The histogram of oriented gradients technique proves that its extremely efficient in detecting the external outline of a car, as follows:***
+
+*Note: Although the first color channel extracts almost the entire car, in some random cases the combined HOG features, further defined the car, which could be abstracted from the following figure: *
+
 <p align="center">
 <img align="center" src="./writeup_imgs/HOG_features20.png" alt="alt text">
 </p>
@@ -54,6 +60,76 @@ Third, we want use the car image itself, increasing the number of features in th
 <p align="center">
 <img align="center" src="./writeup_imgs/spatial_bin.png" alt="alt text">
 </p>
+
+### Now our data features are extracted and are ready to be classified into Cars and NonCars.
+
+---
+
+## 2. Normalizing and Classifying Dataset:
+After we extracted the cars and noncars features, we are required to perform these following major tasks discussed below:
+
+### 1. Labeling and Normalizing the Data:
+1. First, we label the data:
+  * Car Data: We create a vector of ones using `np.ones()` the same length as the car data
+  * NonCar Data: We vreate another vector of zeroes using `np.zeros()` the same length as the noncar data
+  * We stack both vectors together, with a car image labeled with `1` and a noncar image with `0`.
+  * Simultaneously, we stack the feature vectors in the same order as the labels.
+  
+2. Second, due to different scales between the three different features extracted: HOG, Spatial Binning and Color Histograms, the feature vectors are normalized using Sklearn's module `sklearn.preprocessing` to import the `StandardScaler()` function we fit the data to an instance of the `X_scaler = StandardScaler.fit()`  which we feed all the features extracted to be normalized.
+
+### 2. Classifying the Data, and testing the classifiers accuracy:
+1. First, we need to shuffle and split the scaled data to training and testing datasets. This is performed using Sklearn's `sklearn.model_selection` module to import the `train_test_split()` function. This function, shuffles the data features and labels, and splits them into two sets, 90% training features and labels, and 10% testing features and labels.
+*Note: `train_test_split()` creates both training and test sets, with a similar percentage of car and noncar labels. Where each is approximately 50% of the dataset, which is necessary to make sure the classifier isn't biased towards a certain prediction label.*
+
+2. The training features and labels, are fed into a Linear Support Vector Machine which is imported from the SKlearn Library `sklearn.svm.LinearSVC()`.
+*Note: The Linear SVC was chosen for it's simplicity and high efficiency. The `C` parameter of `LinearSVC(C=1.)` was tested with different parameters `C=10.` and `C=100.` Nonetheless, `C=1.` was chosen since it was the most efficient.*
+
+3. Furthermore, the classifier `clf` was tested on the previously separated test set, and achieved an accuracy of approximately 99%.
+*Note: the classifier's accuracy might every time it is run, nonetheless the accuracies fluctuatues around 99%.
+
+---
+
+## 3. Image Processing `process_img()` and Vehicle detection `detect_vehicle()`: 
+We start by detecting vehicles within images, by sliding over the image in overlapping windows performed in `detect_vehicle()` function, and extract the windows which are predicted to contain cars. Then, these windows are used to create a threshholded heatmap using the `generate_heatmap()` function. In the end we use SKlearn's `label()` function from the `scipy.ndimage.measurements` module to cluster objects in the heatmap and label them, which the `labeled_boxes()` uses to draw the predicted objects onto the image. 
+**This process is further explained below**
+
+### 1. Sliding over an image and detecting possible vehicles: `detect_vehicle()`
+
+#### 1. We specify a range over the width of the image to scan for images; `yrange`
+* The entire image height wouldn't be necessary to detect vehicles, since the maximum road peak is below `y = 400`and it starts from a minimum `y = 656`, therefore we specify `yrange = [400,656]` to search for vehicles.
+
+#### 2. Converting the image to the specified colorspace, using `cv2.cvtColor()` & `color_space=YCrCb`
+
+#### 3. Scaling the image to obtain several different window sizes:
+* We downsize the image by the specified scale factor `scale`, so we can with different window sizes within the image.
+* As we reduce the `scale` to 0.5: our window is downsized, instead of a 64x64 window we inspect a 32x32 window.
+* In contrast: as we increase the `scale` to 2.: our window is upsized, instead of a 64x64 window we inspect a 128x128 window.
+***Note: We use scale as a parameter to detect windows within an image, with a specified range, since cars closer to the hood would be large, while cars far away could be smaller. However, since searching the entire image in small windows would be computationally expensive we only search with a `yrange=[400,528]`.**
+
+#### 4. HOG:
+Calculating the HOG features for each window in this image would be extremly expensive computationally. Therefore, we calculate the HOG features over the entire specified image section, then we slide accross the calculated HOGs. 
+* For this step we need to specify the `feature` parameter in the `hog()` function to `feature=False`. Which returns a tensor instead of a vector which we could slide accross.
+* HOG is calculated for each channel, and then flattened into a single feature vector using `ravel()`
+* The HOG for all the channels are concatenated in the same order as they were extracted from the trained data set.
+
+#### 5. Sliding Windows, Feature Extraction & Prediction:
+* Then we slide in windows over the calculated HOG features and image in windows, with respect to the previously determined scale.
+* We resize each window back to 64x64 likewise with `extract_features()` on the 64x64 images in the dataset:
+  1. Calculate the color histograms of the three channels in the **YCrCb** color space, with `color_hist()`.
+  2. Apply spatial binning to the 64x64 window to 32x32, using `spatial_bin()`.
+  3. Combine these features and the HOG features together into a single feature vector for each window.
+    * ***Important: Combine these features in the exact same order as `extract_feature()`***
+  4. Normalizing the extracted features within every window using, the pre-fitted `StandardScaler()` instance `Xscaler`.
+  5. Predicting the label of the features, by feeding them into the trained `LinearSVC` classifier, `clf` 
+    * If the prediction is equal to 1: Append the window from which these features were extracted to the list windows `window_points` that is returned by `detect_vehicle()`
+    * Else, move over to the following window.
+
+#### This function returns all of the possible windows in which the classifier predicted a car within each. Shown below at different scales for the same image:
+<p align="center">
+<img align="center" src="./writeup_imgs/detect_vehicle.png" alt="alt text">
+</p>
+
+### 2. Generating a Heatmap:
 
 The goals / steps of this project are the following:
 
