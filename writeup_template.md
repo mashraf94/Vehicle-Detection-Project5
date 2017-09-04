@@ -5,6 +5,56 @@
 
 **Vehicle Detection Project**
 
+### This project's target is to detect and track moving vehicles in a video stream, using computer vision techniques to extract the features within every frame and a classifier to identify cars from noncars.
+
+### The Project is defined into these major steps:
+#### 1. Extracting features from the provided data set of 64x64 images of cars and noncars `extract_features()`.
+#### 2. Feeding the the dataset's extracted features into a Linear Support Vector Machine Classifier `clf`. 
+#### 3. Process every image, using a sliding windows technique to identify and label possible windows' clusters defining vehicles; `process_img()`.
+#### 4. Process a video stream, by processing every frame individually and tracking each detected car with a high certainity while ignoring false positives; `process_vid()`
+
+## 1. DataSet Feature Extraction: `extract_features()`
+The dataset provided is composed of 17,760 images, 8,792 car images and 8,968 noncar images. Each image's dimensions is 64x64, which resembles a window in an image. For every image we generate a feature vector containing the following features concatenated.
+
+### 1. Histogram of Oriented Gradients (HOG) Features: `hog_feature()`
+We first perform the Histogram of Oriented Gradients on the 64x64 image, using the `skimage.feature` module we import `hog()` function which performs HOG on a single image channel. We provide the `hog()` function with several parameters:
+* The number of orientation bins within which we distribute the gradients: `hog_bins = 9`.
+* The number of pixels in each HOG cell, in which we accumulate the computed gradients: `px_pcell=8`.
+* The number of HOG cells in each HOG block: `cell_pblock=2`.
+
+*The histogram of oriented gradients technique proves that its extremely efficient in detecting the external outline of a car, as follows:*
+<p align="center">
+<img align="center" src="./writeup_imgs/HOG_features20.png" alt="alt text">
+</p>
+
+### 2. Colors Histogram: `color_hist()`
+Second, we compute the histogram of the colors within the image which is well clustered in the **YCrCb** color space for cars and could be separated with a classifier from noncars. We change the image's color space using OpenCV's function `cv2.cvtColor()`. 
+
+Each image is separated into three separate channels, and the colors of each channel is distributed among `color_bins = 32` in a histogram using Numpy's `np.histogram()`. The histograms of each channel are then concatenated together into a vector of 96 features.
+
+*The `YCrCb` color space was chosen following several experiments and visualizing the scatterplot of car and non car images within different colorspaces.*
+
+Moreover, the color histogram of random car and noncar samples were visualized in the **YCrCb** color space; A pattern reveals its self.
+
+<p align="center">
+<img align="center" src="./writeup_imgs/car_color_hist.png" alt="alt text">
+</p>
+
+Where noncar images, does not show a similar pattern to car data color histograms, specially in the **YCrCb** color space. In contrast, noncars have random different patterns of color histograms.
+
+<p align="center">
+<img align="center" src="./writeup_imgs/noncar_color_hist.png" alt="alt text">
+</p>
+
+
+### 3. Spatial Binning: `spatial_bin()`
+Third, we want use the car image itself, increasing the number of features in the feature vector. However, including a 64x64 image would create a massive addition to the other features. Therefore, we resize the image to the specified size `spatial_size=(32,32)` to 32x32 pixels using OpenCV's `cv2.resize()`. Moreover, the resized image is unraveled, into a single vector.
+
+*The images when resized from 64x64 to 32x32 approximately doesn't lose any features; as shown below:* 
+<p align="center">
+<img align="center" src="./writeup_imgs/noncar_color_hist.png" alt="alt text">
+</p>
+
 The goals / steps of this project are the following:
 
 * Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
