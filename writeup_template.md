@@ -3,7 +3,7 @@
 
 ---
 
-**Vehicle Detection Project**
+# **Vehicle Detection Project**
 
 ### This project's target is to detect and track moving vehicles in a video stream, using computer vision techniques to extract the features within every frame and a classifier to identify cars from noncars.
 
@@ -52,7 +52,7 @@ Third, we want use the car image itself, increasing the number of features in th
 
 *The images when resized from 64x64 to 32x32 approximately doesn't lose any features; as shown below:* 
 <p align="center">
-<img align="center" src="./writeup_imgs/noncar_color_hist.png" alt="alt text">
+<img align="center" src="./writeup_imgs/spatial_bin.png" alt="alt text">
 </p>
 
 The goals / steps of this project are the following:
