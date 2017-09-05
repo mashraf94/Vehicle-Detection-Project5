@@ -16,7 +16,7 @@ The video processing pipeline ``process_vid()``, consists of the following steps
     * Or: Remove the detected window since it was presumably a false positive.
   9. The average of widths and heights are used to smooth the window drawn to make sure there aren't any abrupt changes in window's dimensions.
       
-##### Check this [video](./project_output.mp4) to preview the pipeline's output
+##### Check this [video](./project_final_output.mp4) to preview the pipeline's output
 ##### Here is a [youtube link](https://youtu.be/EJKQoRARQeA) for my video to stream it online.
 
 *Please check the [writeup report](./writeup_report.md) for further details*
