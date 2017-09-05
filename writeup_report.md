@@ -77,7 +77,7 @@ After we extracted the cars and noncars features, we are required to perform the
   * Car Data: We create a vector of ones using `np.ones()` the same length as the car data
   * NonCar Data: We vreate another vector of zeroes using `np.zeros()` the same length as the noncar data
   * We stack both vectors together, with a car image labeled with `1` and a noncar image with `0`.
-  * Simultaneously, we stack the feature vectors in the same order as the labels.
+  * Simultaneously, we stack the feature vectors in the same order as the labels. 
   
 2. Second, due to different scales between the three different features extracted: HOG, Spatial Binning and Color Histograms, the feature vectors are normalized using Sklearn's module `sklearn.preprocessing` to import the `StandardScaler()` function we fit the data to an instance of the `X_scaler = StandardScaler.fit()`  which we feed all the features extracted to be normalized.
 
