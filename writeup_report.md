@@ -25,8 +25,7 @@ We first perform the Histogram of Oriented Gradients on the 64x64 image, using t
 * The number of orientation bins within which we distribute the gradients: `hog_bins = 9`.
 * The number of pixels in each HOG cell, in which we accumulate the computed gradients: `px_pcell=8`.
 * The number of HOG cells in each HOG block: `cell_pblock=2`.
-* The Channel to perform HOG calculation within or `'ALL'` for all 3 channels combined: `hog_channel='ALL'` 
-*The `hog_feature()` function, obtains a feature vector of length: 509,436 features/channel.*
+* The Channel to perform HOG calculation within or `'ALL'` for all 3 channels combined: `hog_channel='ALL'`
 
 ***The histogram of oriented gradients technique proves that its extremely efficient in detecting the external outline of a car, as follows:***
 
@@ -64,7 +63,7 @@ Third, we want use the car image itself, increasing the number of features in th
 <img align="center" src="./writeup_imgs/spatial_bin.png" alt="alt text">
 </p>
 
-### Now our data features are extracted and are ready to be classified into Cars and NonCars.
+### Now our data features are extracted into a vector of size: 8460 feature, and they are ready to be classified into Cars and NonCars.
 
 ---
 
