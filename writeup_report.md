@@ -330,4 +330,5 @@ Moreover, you can watch it online on this [YouTube Link]()
 
 3. This pipeline depends on a Linear SVM classifier which is extremely simple, compared to a more complicated classifier. Which the state-of-art performance goes for the YOLO (You Only Look Once) Neural Network, which would be extremely much more accurate in detecting vehicles.
 
-4. 
+4. The classifier is trained on a less than 20,000 image samples of car and noncar images. Further increasing the size of the training set would definitely increase the classifiers performance, and achieve a way more accurate bounding boxes.
+
