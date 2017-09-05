@@ -129,7 +129,15 @@ Calculating the HOG features for each window in this image would be extremly exp
 <img align="center" src="./writeup_imgs/detect_vehicle.png" alt="alt text">
 </p>
 
-### 2. Generating a Heatmap:
+### 2. Generating a Heatmap `generate_heatmap()`:
+#### This function is filters out false positives and duplicate detections:
+1. The windows detected by the classifier, are passed into the function `generate_heatmap()`. Where every pixel within a detected window is incremented by a value of +10.
+2. To target the overlapping windows where pixels have a high value, this is assumed to be our car. Hence, we threshhold the pixels with a value less than the specified `threshhold=30` parameter to a 0 value.
+
+*This function is executed for every image, producing the following result:*
+<p align="center">
+<img align="center" src="./writeup_imgs/heatmap.png" alt="alt text">
+</p>
 
 The goals / steps of this project are the following:
 
