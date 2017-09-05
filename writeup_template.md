@@ -25,7 +25,8 @@ We first perform the Histogram of Oriented Gradients on the 64x64 image, using t
 * The number of orientation bins within which we distribute the gradients: `hog_bins = 9`.
 * The number of pixels in each HOG cell, in which we accumulate the computed gradients: `px_pcell=8`.
 * The number of HOG cells in each HOG block: `cell_pblock=2`.
-* The Channel to perform HOG calculation within or `'ALL'` for all 3 channels combined: `hog_channel='ALL'`
+* The Channel to perform HOG calculation within or `'ALL'` for all 3 channels combined: `hog_channel='ALL'` 
+*The `hog_feature()` function, obtains a feature vector of length: 509,436 features/channel.*
 
 ***The histogram of oriented gradients technique proves that its extremely efficient in detecting the external outline of a car, as follows:***
 
@@ -56,7 +57,7 @@ Where noncar images, does not show a similar pattern to car data color histogram
 
 
 ### 3. Spatial Binning: `spatial_bin()`
-Third, we want use the car image itself, increasing the number of features in the feature vector. However, including a 64x64 image would create a massive addition to the other features. Therefore, we resize the image to the specified size `spatial_size=(32,32)` to 32x32 pixels using OpenCV's `cv2.resize()`. Moreover, the resized image is unraveled, into a single vector.
+Third, we want use the car image itself, increasing the number of features in the feature vector. However, including a 64x64 image would create a massive addition to the other features. Therefore, we resize the image to the specified size `spatial_size=(32,32)` to 32x32 pixels using OpenCV's `cv2.resize()`. Moreover, the resized image is unraveled, into a single vector of length 3,072.
 
 *The images when resized from 64x64 to 32x32 approximately doesn't lose any features; as shown below:* 
 <p align="center">
