@@ -307,7 +307,7 @@ class Vehicle():
 
 ### Video Processing Pipeline Output.
 Here's a link to [my video](./project_video.mp4) result
-Moreover, you can watch it online on this [YouTube Link]()
+Moreover, you can watch it online on this [YouTube Link](https://youtu.be/EJKQoRARQeA)
 
 ---
 
