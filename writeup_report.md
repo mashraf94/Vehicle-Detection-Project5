@@ -8,6 +8,8 @@
 #### 3. Process every image, using a sliding windows technique to identify and label possible windows' clusters defining vehicles; `process_img()`.
 #### 4. Process a video stream, by processing every frame individually and tracking each detected car with a high certainity while ignoring false positives; `process_vid()`
 
+### *This report discusses the code contained in the [IPython Notebook](./Vehicle_Detection_Project5.ipynb).*
+
 ---
 
 ## 1. DataSet Feature Extraction: `extract_features()`
