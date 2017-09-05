@@ -1,8 +1,3 @@
-##Writeup Template
-###You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
----
-
 # **Vehicle Detection Project**
 
 ### This project's target is to detect and track moving vehicles in a video stream, using computer vision techniques to extract the features within every frame and a classifier to identify cars from noncars.
@@ -13,8 +8,15 @@
 #### 3. Process every image, using a sliding windows technique to identify and label possible windows' clusters defining vehicles; `process_img()`.
 #### 4. Process a video stream, by processing every frame individually and tracking each detected car with a high certainity while ignoring false positives; `process_vid()`
 
+---
+
 ## 1. DataSet Feature Extraction: `extract_features()`
-The dataset provided is composed of 17,760 images, 8,792 car images and 8,968 noncar images. Each image's dimensions is 64x64, which resembles a window in an image. For every image we generate a feature vector containing the following features concatenated.
+The dataset provided is composed of 17,760 images, 64x64 pixels/img, 8,792 car images and 8,968 noncar images. Below is a sample of the car and noncar data:
+<p align="center">
+<img align="center" src="./writeup_imgs/temp_examples.png" alt="alt text">
+</p>
+
+Each image's dimensions is 64x64, which resembles a window in an image. For every image we generate a feature vector containing the following features concatenated. 
 
 ### The `extract_features()` function uses the following functions to acquire each image's features and concatenates them in a single feature vector:
 
@@ -129,109 +131,184 @@ Calculating the HOG features for each window in this image would be extremly exp
 <img align="center" src="./writeup_imgs/detect_vehicle.png" alt="alt text">
 </p>
 
-### 2. Generating a Heatmap `generate_heatmap()`:
-#### This function is filters out false positives and duplicate detections:
-1. The windows detected by the classifier, are passed into the function `generate_heatmap()`. Where every pixel within a detected window is incremented by a value of +10.
-2. To target the overlapping windows where pixels have a high value, this is assumed to be our car. Hence, we threshhold the pixels with a value less than the specified `threshhold=30` parameter to a 0 value.
+### 2. Generating a Heatmap `generate_heatmap()`, Labelling `label()` and Drawing `labeled_boxes()`:
+#### 1. `generate_heatmap()` function filters out false positives and duplicate detections 
+* The windows detected by the classifier, are passed into the function `generate_heatmap()`. Where every pixel within a detected window is incremented by a value of +10.
+* To target the overlapping windows where pixels have a high value, this is assumed to be our car. Hence, we threshhold the pixels with a value less than the specified `threshhold=30` parameter to a 0 value.
+#### 2. Scipy's `scipy.ndimage.measurements` module we import the `label()` function, which clusters the detected blobs into separate labeled objects:
+* The heatmap consists of several blobs which are assumed to be vehicles, yet we need to group each seperate blob into an object.
+* The label function takes the `heatmap` as input and outputs `labels`:
+    * `labels[0]` an image where each pixel's value within a specific object is equal to the label's number.
+    * `labels[1]` the number of clustered blobs in the image
+#### Heatmaps and Labels are visualized to understand their concepts on the test images, shown below:
 
 *This function is executed for every image, producing the following result:*
 <p align="center">
 <img align="center" src="./writeup_imgs/heatmap.png" alt="alt text">
 </p>
 
-The goals / steps of this project are the following:
-
-* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
-* Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
-* Note: for those first two steps don't forget to normalize your features and randomize a selection for training and testing.
-* Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
-* Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
-* Estimate a bounding box for vehicles detected.
-
-[//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
-[video1]: ./project_video.mp4
-
-## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
-###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
+#### 3. Using the `labeled_boxes()` functions:
+* `labeled_boxes()` takes as input the labels (`label()` output) and get the maximum possible bounding box to the detected object.
+* For each set of tuples, `(top_left,bottom_right)` indices of each bounding box, using OpenCV's `cv2.rectangle()` we draw a blue bounding box onto the detected object, as shown below:
+<p align="center">
+<img align="center" src="./writeup_imgs/labeled_cars.png" alt="alt text">
+</p>
 
 ---
-###Writeup / README
 
-####1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  [Here](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) is a template writeup for this project you can use as a guide and a starting point.  
+## 4. Video Processing `process_vid()` and `class Vehicle()`:
+### This pipeline is quite similar in concept to the Image processing pipeline `process_img()`, nonetheless its implementation its quite different. Briefly, here is the steps implemented in this Vehicle Tracking pipeline.
 
-You're reading it!
+#### 1. Reapply the Image processing pipeline for feature extraction:
+  
+  1. Use `detect_vehicle()` with the same exact specified parameters, to slide over the image in windows and extract each window's feature vector:
+    * Color Space: `color_space = 'YCrCb'`
+    * HOG, `hog_feature()`: 
+      1. `hog_bins = 9`
+      2. `px_pcell=8`
+      3. `cell_pblock=2`
+      4. `hog_channel='ALL'`
+    * Color Histogram, `color_hist()`: `color_bins = 32`
+    * Spatial Binning, `spatial_bin()`: `spatial_size = (32,32)`
+  
+  2. Detect Vehicles over different scales `[1.,1.25,1.5,2.]` over a specified portion of the image, with `detect_vehicle()`
+    * For scales `[1.,1.25]` their yrange was limited within `yrange=[400,528]` where these small scales would search for far away cars.
+    * For scales `[1.5,2.]` their yrange was extended over the full road `yrange=[400,656]` to detect nearby and close cars which would appear large and might cover the entire road.
+    ***Note: The same scales were used for the image processing pipeline, and could be visualized in the Image Processing Segment***
+    
+  3. Generate a heatmap of the total of the detected windows accross different scales, with `generate_heatmap()`, and threshhold the image at a specified `threshhold=30`
+  
+  4. Label the blobs within the heat image using Scipy's `label()` function.
+  
+### At this point we stop mimicking the `process_img()` pipeline -
 
-###Histogram of Oriented Gradients (HOG)
+#### 2. The `Vehicle()` Class:
+* ***This class contains all set of features we need for tracking a presumed vehicle, including:***
+```python
+class Vehicle():
+    def __init__(self):
+        # Define wether the vehicle was detected or not.
+        self.detected = False
+        
+        # Counts the number of times has been and hasn't been detected.
+        self.n_detected = 0
+        self.not_detected = 0
+        
+        # Used for the calculation of bounding boxes.
+        self.nonzeroX = None
+        self.nonzeroY = None
+        
+        # We track each detection using the centers, that are calculated, stored for following detections.
+        self.Ycenter = None
+        self.Xcenter = None
+        self.recent_Ycenters = []
+        self.recent_Xcenters = []
+        
+        # Width is used for template matching, we add the width and height to the top_left corner matched.
+        self.width = None
+        self.height = None
+        self.recent_width = []
+        self.recent_height = []
+        
+        # Dimensions of a bounding box, which are smoothed and used to draw a steady bounding box.
+        self.top_left = None
+        self.bottom_right = None
+        
+        # Save an image of the detected image for Template Matching
+        self.template = None
+        
+        # A flag to indicate wether we need to perform Template matching for a Vehicle or not.
+        self.flag = False
+```
+* ***Moreover, this class includes, several functions to facilitate regular calculations***
+```python
+    # Used to identify centers for each local detection.
+    def centers(self):
+        self.Ycenter = np.mean(self.nonzeroY)
+        self.Xcenter = np.mean(self.nonzeroX)
+    
+    # Calculates the Car's dimensions using the detected bounding box.    
+    def calc_dims(self):
+        self.width = self.bottom_right[0] - self.top_left[0]
+        self.height = self.bottom_right[1] - self.top_left[1]
+    
+    # A major function, it's main function is to calculate the top_left, bottom_right tuples for cv2.rectangle()
+    def draw_window(self): 
+        if ((len(self.recent_width) > 0) & (len(self.recent_height) > 0) &
+            (len(self.recent_Ycenters) > 0) & (len(self.recent_Xcenters) > 0)):
+            self.width = np.mean(self.recent_width)
+            self.height = np.mean(self.recent_height)
+            self.Xcenter = np.mean(self.recent_Xcenters)
+            self.Ycenter = np.mean(self.recent_Ycenters)
+            self.top_left = (np.int(self.Xcenter-self.width//2), np.int(self.Ycenter-self.height//2))
+            self.bottom_right = (np.int(self.Xcenter+self.width//2), np.int(self.Ycenter+self.height//2))
+        
+    # Dequeue the array of saved dimensions, when it exceeds the specified n parameter
+    def dequeue_dims(self, n=20):
+        if len(self.recent_width) > n:
+            self.recent_width.pop(0)
+        if len(self.recent_height) > n:
+            self.recent_height.pop(0)
+    
+    # Dequeue the array of saved centers, when it exceeds the specified n parameter
+    def dequeue_centers(self, n=10):
+        if len(self.recent_Ycenters) > n:
+            self.recent_Ycenters.pop(0)
+        if len(self.recent_Xcenters) > n:
+            self.recent_Xcenters.pop(0)
+```
 
-####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
+#### 3. The tracking pipeline algorithm:
+* This is a brief description of the implemented algorithm in the `process_vid()` pipeline, which is applied onto each frame of a video:
+#### The tracking pipeline, manipulates three arrays:
+1. `cars = []`:
+* A global array, which contains presumed cars, and according to Vehicle.n_detected and Vehicle.not_detected, we decide wether to keep or get rid of a Vehicle() instance.
 
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
+2. `temp = []`: 
+* Another global array, contains the previous detections that weren't considered as vehicles, to compare with the next frame's detection to identify wether its a false positive or might be a vehicle.
+* The `temp` array is redefined at the end of each frame, as the detections remaining in the `local_detections`; that weren't matched.
 
-I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
+3. `local_detections = []` 
+* A local array that is renewed with every frame, and contains all the labeled detections.
+* If one of the local detections is identified as a car, this local_detection is removed instantly from the array. 
+* At the end of processing every frame, we have local_detections containing only non matched Vehicles and is copied into temp.
 
-![alt text][image1]
-
-I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
-
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
-
-
-![alt text][image2]
-
-####2. Explain how you settled on your final choice of HOG parameters.
-
-I tried various combinations of parameters and...
-
-####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
-
-I trained a linear SVM using...
-
-###Sliding Window Search
-
-####1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
-
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
-
-![alt text][image3]
-
-####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
-
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
-
-![alt text][image4]
----
+#### Steps:
+  1. Loop over detected labels, similarly to the `labeled_boxes()` function. And calculate the maximum bounding box possible for each label.
+  2. Assign each label as a `Vehicle()` and append to `local_detections` array, which includes all the detected labels from this frame, and gets flushed and refreshed every detection.
+    * Calculate the `Xcenter, Ycenter, width, height, top_left, bottom_right`, before appending the `Vehicle()` instance to the `local_detections()` array.
+    * Note: The `local_detections` array is essential to compare the detections within every frame, with past frames and detected vehicles. 
+  
+  3. Loop over the global `temp` array (if it isn't empty), and compare with each detection in the `local_detections` array. if 2 detections' centers are really close, assume this detection is a Vehicle and append this instance to the global array `cars`.
+    * ***Note: We identify the proximity of the (Xcenter,Ycenter) of the past detection from `temp` and the new detection in `local_detections` using the Math Library's function `isclose()` which is `True` if the difference is less than the specified `abs_tol` parameter.***
+    * If the past and present detections overlap, calculate the different parameters of this presumed `Vehicle()`, and save the image within the bounding box as the `car.template`.
+    * Finally, append this detection to the global array `cars`.
+    
+  4. We loop over the cars array to:
+     1. Detect New Cars, or new detections of our detected Cars.
+        * First, we loop over the local_detections array, and check if there are any nearby bounding_boxes to our presumed vehicle's position.
+        * If a detection was found:
+            1. Either its really close, and considered accurate and the car parameters are recalculated, adding the detected centers and dimensions into `recent_Xcenters`, `recent_Ycenters`, `recent_width`, `recent_height`, and a smoothed `top_left` & `bottom_right` for drawing by calling the `car.draw_window()` method.
+            2. If its close but not accurately, and the car has already received a high confidence `n_detected >= 5`, set `car.Flag=True` and use the `find_match()` function to match the presaved `car.template` in the image.
+               * The `find_match()` function, uses OpenCV's `cv2.matchTemplate()` with the method parameter set as `methed=cv2.TM_CCOEFF_NORMED`.
+               * Since the method specified is a correlation we use the `max_loc` output from OpenCv's `cv2.minMaxLoc()` function.
+               * The detected top left tuple is added to the width and height of the car; while ensuring that the resulting bottom right tuple doesn't exceed the image dimensions.
+           
+            3. If the detected template is similar to the previous position of the car `Xcenter, Ycenter`, assume that you've detected the car `car.detected=True`, and recalculate the car's properties; by calling the `car.draw_window()` method.
+              * ***Do Not Calculate the image's new template from the bounding box matched, since it is most probably innaccurate.***
+            * ***Most Importantly: remember to remove a matched local_detection to avoid duplicates***
+         
+         * Else, if a detection is not found:
+           1. If a car has a high certainity, draw an average bounding box from `recent_*` arrays. But increment it's `car.not_detected +=1` uncertainity value.
+           2. If a car has an uncertainity of `car.not_detected > 5`; we remove this car from the cars array, assuming it was a false positive, or the car dissapeared from our vision (video frames).
+  
+  5. Finally, at a high certainty and low uncertainty `(car.n_detected >= 5) & (car.not_detected < 3)`, use OpenCV's `cv2.rectangle()` function to draw a bounding box over the presumed Vehicle.
+  
 
 ### Video Implementation
 
-####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
-
-
-####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
-
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
-
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
-
-### Here are six frames and their corresponding heatmaps:
-
-![alt text][image5]
-
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
-
-### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
-
-
-
+Here's a link to [my video](./project_video.mp4) result
+Moreover, you can watch it online on this [YouTube Link]()
 ---
 
 ###Discussion
