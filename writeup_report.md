@@ -306,15 +306,28 @@ class Vehicle():
   5. Finally, at a high certainty and low uncertainty `(car.n_detected >= 5) & (car.not_detected < 3)`, use OpenCV's `cv2.rectangle()` function to draw a bounding box over the presumed Vehicle.
   
 
-### Video Implementation
-
+### Video Processing Pipeline Output.
 Here's a link to [my video](./project_video.mp4) result
 Moreover, you can watch it online on this [YouTube Link]()
+
 ---
 
-###Discussion
+## 5. Discussion
 
-####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
+### In this discussion I'd like to mention the weak points in my pipeline:
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+1. The pipeline is extremely slow, compared to realtime. A processing time of 2 seconds/frame is definitely unacceptable. The tracking techniques needs to be further and further enhanced to achieve a realtime processing speed.
 
+2. The pipeline's bounding boxes suffer under several conditions:
+   * Shadowing and Dark regions: these variations in color might get detected as vehicles and break the center continuity of the vehicle.
+   * Really Distant Vehicles: it's extremely unstable, nonetheless.. as we approach that vehicle the detection becomes more and more accurate.
+   * Really Close Cars, Overlapping Cars: In the project video at a certain point the black vehicle literally overlaps the white vehicle, which is fine, however for the next couple of frames, both cars are detected as a single object. This could only be fixed by revisiting the `label()` function and redefining it to separate such occurances.
+   **This issue is visualized in the following frames, where both cars are detected as one.**
+   *The frames aren't a consecutive time-series, instead is multiple frames where the same problem is existing*
+   <p align="center">
+   <img align="center" src="./writeup_imgs/discussion.png" alt="alt text">
+   </p>
+
+3. This pipeline depends on a Linear SVM classifier which is extremely simple, compared to a more complicated classifier. Which the state-of-art performance goes for the YOLO (You Only Look Once) Neural Network, which would be extremely much more accurate in detecting vehicles.
+
+4. 
