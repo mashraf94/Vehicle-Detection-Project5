@@ -20,4 +20,4 @@ The video processing pipeline ``process_vid()``, consists of the following steps
 ##### Here is a [youtube link](https://youtu.be/EJKQoRARQeA) for my video to stream it online.
 
 *Please check the [writeup report](./writeup_report.md) for further details*
-*Also check my implementation contained in this [IPython Notebook](./Vehicle_Detection_Project5.ipynb)
+*Also check my implementation contained in this [IPython Notebook](./Vehicle_Detection_Project5.ipynb) 
